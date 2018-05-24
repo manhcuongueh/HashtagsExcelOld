@@ -16,7 +16,7 @@ class UsersController < ApplicationController
         #Get Instagram Url
         @insta_url=params[:insta_url]
         #run chrome
-        @@bot = Selenium::WebDriver.for :chrome
+        @@bot = Selenium::WebDriver.for :chrome 
        
         @@bot.navigate.to "#{@insta_url}"  
         sleep 1
@@ -64,12 +64,17 @@ class UsersController < ApplicationController
         #Crawl used time by global
         for i in @appearance  
             begin
+                #@@bot.navigate.to "https://www.instagram.com/explore/tags/#{URI.encode(i[0])}"
                 url=URI.parse "https://www.instagram.com/explore/tags/#{URI.encode(i[0])}"
-                file = open(url)
-                appearance_time = file.read
+                doc = Nokogiri::HTML(open(url))
+                appearance_time = doc.text
                 appearance_time = appearance_time.split('"edge_hashtag_to_media":{"count":')[1]
                 appearance_time = appearance_time.split(',"page_info":{"')[0]
                 @appearance_times.push(appearance_time)
+                rescue OpenURI::HTTPError=> e
+                    if e.message == '404 Not Found'   
+                        @appearance_times.push('Wrong hashtags')
+                    end
             end
         end
         render 'index'
